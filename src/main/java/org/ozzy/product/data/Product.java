@@ -43,4 +43,7 @@ public class Product {
     public void setPrice(double price) {
         this.price = price;
     }
+    public static boolean isValid(Product product) {
+        return product != null && product.getName() != null && product.getDescription() != null && product.getPrice() >= 0;
+    }
 }

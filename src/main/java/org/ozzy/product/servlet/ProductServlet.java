@@ -1,6 +1,7 @@
 package org.ozzy.product.servlet;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import org.ozzy.product.data.DataStore;
 import org.ozzy.product.data.DataStoreImpl;
 import org.ozzy.product.data.Product;
@@ -23,6 +24,28 @@ public class ProductServlet extends HttpServlet {
         out.println(json);
         out.flush();
         out.close();
+    }
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        addJsonHeaders(resp);
+        Gson gson = new Gson();
+        try {
+            BufferedReader body = req.getReader();
+            Product product = gson.fromJson(body, Product.class);
+            if (!Product.isValid(product)) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
+            dataStore.addProduct(product);
+            resp.addHeader("Location", "/product/" + product.getId());
+            resp.setStatus(HttpServletResponse.SC_CREATED);
+        }
+        catch (JsonSyntaxException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+        catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
     }
     private static void addJsonHeaders(HttpServletResponse resp) {
         resp.setContentType("application/json");
