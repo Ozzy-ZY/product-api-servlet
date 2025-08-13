@@ -7,6 +7,7 @@ import org.ozzy.product.data.DataStoreImpl;
 import org.ozzy.product.data.Product;
 import java.io.*;
 import java.util.Collection;
+import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
@@ -76,6 +77,18 @@ public class ProductServlet extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
 
+    }
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        addJsonHeaders(resp);
+        try {
+            int id = Integer.parseInt(req.getParameter("id"));
+            dataStore.removeProduct(id);
+            resp.setStatus(HttpServletResponse.SC_OK);
+        }
+        catch (NumberFormatException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
     }
     private static void addJsonHeaders(HttpServletResponse resp) {
         resp.setContentType("application/json");
