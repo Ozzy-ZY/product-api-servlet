@@ -47,6 +47,36 @@ public class ProductServlet extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        addJsonHeaders(resp);
+        Gson gson = new Gson();
+        try{
+            int id = Integer.parseInt(req.getParameter("id"));
+            Product dataStoreProduct = dataStore.getProduct(id);
+            if (dataStoreProduct == null) {
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+            BufferedReader body = req.getReader();
+            Product updatedProduct = gson.fromJson(body, Product.class);
+            updatedProduct.setId(id);
+            if (!Product.isValid(updatedProduct)) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
+            dataStore.updateProduct(updatedProduct);
+            resp.setStatus(HttpServletResponse.SC_OK);
+        }
+        catch(NumberFormatException | JsonSyntaxException e){
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+        catch(Exception e){
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+
+    }
     private static void addJsonHeaders(HttpServletResponse resp) {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
