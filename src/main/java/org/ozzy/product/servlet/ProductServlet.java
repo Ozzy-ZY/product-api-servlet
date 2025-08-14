@@ -7,7 +7,6 @@ import org.ozzy.product.data.DataStoreImpl;
 import org.ozzy.product.data.Product;
 import java.io.*;
 import java.util.Collection;
-import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
@@ -21,35 +20,44 @@ public class ProductServlet extends HttpServlet {
         Gson gson = new Gson();
         PrintWriter out;
         String pathInfo = req.getPathInfo();
-        int id = 0;
-        if (pathInfo != null && pathInfo.length() > 1) {
-            try {
-                id = Integer.parseInt(pathInfo.substring(1));
-                if(id < 0)
-                    throw new NumberFormatException();
-            }
-            catch (NumberFormatException e) {
-                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
-        }
-        if (id > 0) {
+        if(pathInfo != null && pathInfo.length() > 1){
+            int id = parseProductIdAndSetStatus(pathInfo, resp);
+            if(id == -1)
+                return; // status is already set
             Product product = dataStore.getProduct(id);
             if (product == null) {
                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
+
             out = resp.getWriter();
             String json = gson.toJson(product);
             out.println(json);
+            out.close();
         }
         else{
             out = resp.getWriter();
             Collection<Product> resultObj = dataStore.getProducts();
             String json = gson.toJson(resultObj.toArray());
             out.println(json);
+            out.close();
         }
     }
+
+    private int parseProductIdAndSetStatus(String pathInfo, HttpServletResponse resp) throws IOException {
+        try {
+            int id = Integer.parseInt(pathInfo.substring(1));
+            if (id <= 0) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                return -1;
+            }
+            return id;
+        } catch (NumberFormatException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return -1;
+        }
+    }
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         addJsonHeaders(resp);
