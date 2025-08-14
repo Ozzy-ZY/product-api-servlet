@@ -12,19 +12,43 @@ import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 
-@WebServlet(name = "product-servlet", value = "/product")
+@WebServlet(name = "product-servlet", value = "/product/*")
 public class ProductServlet extends HttpServlet {
     private final DataStore dataStore = DataStoreImpl.getInstance();
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         addJsonHeaders(resp);
-        Collection<Product> resultObj = dataStore.getProducts();
         Gson gson = new Gson();
-        String json = gson.toJson(resultObj.toArray());
-        PrintWriter out = resp.getWriter();
-        out.println(json);
-        out.flush();
-        out.close();
+        PrintWriter out;
+        String pathInfo = req.getPathInfo();
+        int id = 0;
+        if (pathInfo != null && pathInfo.length() > 1) {
+            try {
+                id = Integer.parseInt(pathInfo.substring(1));
+                if(id < 0)
+                    throw new NumberFormatException();
+            }
+            catch (NumberFormatException e) {
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+        }
+        if (id > 0) {
+            Product product = dataStore.getProduct(id);
+            if (product == null) {
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+            out = resp.getWriter();
+            String json = gson.toJson(product);
+            out.println(json);
+        }
+        else{
+            out = resp.getWriter();
+            Collection<Product> resultObj = dataStore.getProducts();
+            String json = gson.toJson(resultObj.toArray());
+            out.println(json);
+        }
     }
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
