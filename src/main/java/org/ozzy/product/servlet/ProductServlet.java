@@ -70,7 +70,10 @@ public class ProductServlet extends HttpServlet {
                 return;
             }
             dataStore.addProduct(product);
-            resp.addHeader("Location", "/product/" + product.getId());
+            String requestUrl = req.getRequestURL().toString();
+            String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo();
+            String newPath = requestUrl.substring(0, requestUrl.length() - pathInfo.length()) + "/" + product.getId();
+            resp.addHeader("Location", newPath);
             resp.setStatus(HttpServletResponse.SC_CREATED);
         }
         catch (JsonSyntaxException e) {
