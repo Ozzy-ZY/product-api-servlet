@@ -5,6 +5,7 @@ import com.google.gson.JsonSyntaxException;
 import org.ozzy.product.data.DataStore;
 import org.ozzy.product.data.DataStoreImpl;
 import org.ozzy.product.data.Product;
+import org.ozzy.product.servlet.requestmodel.AddProductRequest;
 import java.io.*;
 import java.util.Collection;
 import javax.servlet.ServletException;
@@ -64,7 +65,17 @@ public class ProductServlet extends HttpServlet {
         Gson gson = new Gson();
         try {
             BufferedReader body = req.getReader();
-            Product product = gson.fromJson(body, Product.class);
+            AddProductRequest addRequest = gson.fromJson(body, AddProductRequest.class);
+            if (!AddProductRequest.isValid(addRequest)) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
+            if(dataStore.isIdempotencyKeyExists(addRequest.getIdempotencyKey())) {
+                resp.setStatus(HttpServletResponse.SC_CONFLICT);
+                return;
+            }
+            dataStore.addIdempotencyKey(addRequest.getIdempotencyKey());
+            Product product = new Product(0, addRequest.getName(), addRequest.getDescription(), addRequest.getPrice());
             if (!Product.isValid(product)) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 return;

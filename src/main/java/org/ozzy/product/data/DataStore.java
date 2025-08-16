@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 public interface DataStore {
+    public boolean isIdempotencyKeyExists(String idempotencyKey);
+    public void addIdempotencyKey(String idempotencyKey);
     public Collection<Product> getProducts();
     public Product getProduct(int id);
     public void addProduct(Product product);
